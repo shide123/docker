@@ -1,9 +1,0 @@
-1.install scons in the following ways:
-yum install cmake 
-
-2.run these command to build
-cd jsoncpp-0.10.2 
-mkdir -p build/debug
-cd build/debug
-cmake -DCMAKE_BUILD_TYPE=debug -DBUILD_STATIC_LIBS=OFF -DBUILD_SHARED_LIBS=ON -DARCHIVE_INSTALL_DIR=. -G "Unix Makefiles" ../..
-make
