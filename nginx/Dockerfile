@@ -31,13 +31,17 @@ ADD nginx/logstash.conf /usr/local/myconf/logstash.conf
 #add nginx.conf
 ADD nginx/nginx.conf /usr/local/myconf/nginx.conf
 ADD nginx/fastcgi_params /usr/local/myconf/fastcgi_params
+#add start script
+ADD nginx/start.sh /tmp/start.sh
 
 #add extend  port
 EXPOSE 80 8081 443
 
 #start app
 #RUN nginx -c /usr/local/myconf/nginx.conf
-RUN nohup /usr/local/logstash/bin/logstash -f /usr/local/myconf/logstash.conf &
+#RUN nohup /usr/local/logstash/bin/logstash -f /usr/local/myconf/logstash.conf &
+
+CMD ["/bin/sh","/tmp/start.sh"]
 
 #start container: docker 
 ##docker run --name nginx -v <config_path>:/usr/local/myconf/ --link php5.6:php5.6 -d <image_name>

@@ -17,9 +17,9 @@ RUN cd /usr/local && wget http://ftp.gnu.org/gnu/m4/m4-1.4.9.tar.gz && tar -zvxf
 ADD php5.6/php-fpm.conf /usr/local/myconf/php-fpm.conf
 ADD php5.6/php.ini /usr/local/myconf/php.ini
 ADD php5.6/www.conf /usr/local/myconf/php-fpm.d/www.conf
-
+ADD php5.6/start.sh /tmp/start.sh
 #start app
-RUN php-fpm -c /usr/local/myconf/php.ini -y /usr/local/myconf/php-fpm.conf
+#RUN php-fpm -c /usr/local/myconf/php.ini -y /usr/local/myconf/php-fpm.conf
 
 
 EXPOSE 9000
@@ -27,4 +27,5 @@ EXPOSE 9000
 #start container
 #docker run --name php5.6  -v /www:/www -v /usr/local/lnmp/docker-file/php5.6:/usr/local/myconf -d php5.6/php5.6
 
+CMD["/bin/sh","/tmp/start.sh"]
 
