@@ -1,0 +1,25 @@
+[self]
+svrid=6070
+startport=6070
+workproc=5
+protocol=Frame
+startprotocol=Frame
+rpcport=16070
+#12*3600
+redpacket_timeout=43200
+#3*24*3600 = 259200
+redpacket_cache_timeout=259200
+redpacket_combo_time=10
+redpacket_recycle=1
+
+[log]
+logmode=2
+loglevel=1
+usesyslog=1
+
+[server]
+rpcsvr_name=chatsvr_mc_rpc,roomsvr_mc_rpc
+ip_expression=121.12.118.32
+
+[cmd]
+cmdrange_1=4000:4999

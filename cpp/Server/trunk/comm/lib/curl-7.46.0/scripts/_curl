@@ -1,0 +1,95 @@
+#compdef curl
+
+# curl zsh completion
+
+local curcontext="$curcontext" state state_descr line
+typeset -A opt_args
+
+local rc=1
+
+_arguments -C -S \
+  --retry-delay'[When retrying, wait this many seconds between each]':<seconds> \
+  --ftp-ssl-control'[SSL/TLS for ftp login, clear for transfer (F)]':Require \
+  --hostpubmd5'[Hex encoded MD5 string of the host public key. (SSH)]':<md5> \
+  --ftp-account'[Account data to send when requested by server (F)]':<data> \
+  --ftp-alternative-to-user'[String to replace "USER \[name\]" (F)]':<cmd> \
+  --socks5-hostname'[SOCKS5 proxy, pass host name to proxy]':<host[:port]> \
+  --location-trusted'[Location: and send auth to other hosts (H)]':Follow \
+  --engine'[Crypto engine to use (SSL). "--engine list" for list]':<eng> \
+  --retry'[Retry request <num> times if transient problems occur]':<num> \
+  --socks5-gssapi-service'[SOCKS5 proxy service name for gssapi]':<name> \
+  --libcurl'[Dump libcurl equivalent code of this command line]':<file> \
+  --crlfile'[Get a CRL list in PEM format from the given file]':<file> \
+  --post301'[Do not switch to GET after following a 301 redirect (H)]' \
+  --post302'[Do not switch to GET after following a 302 redirect (H)]' \
+  --compressed'[Request compressed response (using deflate or gzip)]' \
+  --interface'[Specify network interface/address to use]':<interface> \
+  --connect-timeout'[Maximum time allowed for connection]':<seconds> \
+  --krb'[Enable Kerberos with specified security level (F)]':<level> \
+  --proxy-negotiate'[Negotiate authentication on the proxy (H)]':Use \
+  --capath'[CA directory to verify peer against (SSL)]':<directory> \
+  --local-port'[Force use of these local port numbers]':<num>[-num] \
+  --noproxy'[Comma-separated list of hosts which do not use proxy]' \
+  --ftp-method'[Control CWD usage (F)]':[multicwd/nocwd/singlecwd] \
+  --ignore-content-length'[Ignore the HTTP Content-Length header]' \
+  --cert-type'[Certificate file type (DER/PEM/ENG) (SSL)]':<type> \
+  --keepalive-time'[Interval between keepalive probes]':<seconds> \
+  --random-file'[File for reading random data from (SSL)]':<file> \
+  --trace-ascii'[Like --trace but without the hex output]':<file> \
+  --cacert'[CA certificate to verify peer against (SSL)]':<file> \
+  --ftp-create-dirs'[the remote dirs if not present (F)]':Create \
+  --key-type'[Private key file type (DER/PEM/ENG) (SSL)]':<type> \
+  --max-filesize'[Maximum file size to download (H/F)]':<bytes> \
+  --max-redirs'[Maximum number of redirects allowed (H)]':<num> \
+  --proxy-anyauth'["any" proxy authentication method (H)]':Pick \
+  --socks4a'[SOCKS4a proxy on given host + port]':<host[:port]> \
+  --proxy-digest'[Use Digest authentication on the proxy (H)]' \
+  --proxy1.0'[Use HTTP/1.0 proxy on given port]':<host[:port]> \
+  --create-dirs'[Create necessary local directory hierarchy]' \
+  --form-string'[Specify HTTP multipart POST data (H)]':<name=string> \
+  --pass'[<pass>  Pass phrase for the private key (SSL/SSH)]' \
+  --raw'[Pass HTTP "raw", without any transfer decoding (H)]' \
+  --retry-max-time'[Retry only within this period]':<seconds> \
+  --socks4'[SOCKS4 proxy on given host + port]':<host[:port]> \
+  --socks5'[SOCKS5 proxy on given host + port]':<host[:port]> \
+  --socks5-gssapi-nec'[Compatibility with NEC SOCKS5 server]' \
+  --stderr'[Where to redirect stderr. - means stdout]':<file> \
+  --egd-file'[EGD socket path for random data (SSL)]':<file> \
+  --netrc-optional'[either .netrc or URL; overrides -n]':Use \
+  --proxy-basic'[Use Basic authentication on the proxy (H)]' \
+  --remote-name-all'[the remote file name for all URLs]':Use \
+  --no-keepalive'[Disable keepalive use on the connection]' \
+  --data-urlencode'[HTTP POST data url encoded (H)]':<name=data/name@filename> \
+  --limit-rate'[Limit transfer speed to this rate]':<rate> \
+  --proxy-ntlm'[Use NTLM authentication on the proxy (H)]' \
+  --ftp-ssl-ccc-mode'[Set CCC mode (F)]':[active/passive] \
+  --trace'[Write a debug trace to the given file]':<file> \
+  --trace-time'[Add time stamps to trace/verbose output]' \
+  --ftp-skip-pasv-ip'[the IP address for PASV (F)]':Skip \
+  --ftp-ssl-reqd'[Require SSL/TLS for ftp transfer (F)]' \
+  --no-sessionid'[Disable SSL session-ID reusing (SSL)]' \
+  --delegation'[GSS-API delegation permission]':STRING \
+  --negotiate'[Use HTTP Negotiate Authentication (H)]' \
+  --ftp-ssl-ccc'[Send CCC after authenticating (F)]' \
+  --anyauth'[Pick "any" authentication method (H)]' \
+  --data-binary'[HTTP POST binary data (H)]':<data> \
+  --disable-eprt'[Inhibit using EPRT or LPRT (F)]' \
+  --data-ascii'[HTTP POST ASCII data (H)]':<data> \
+  --ftp-pasv'[Use PASV/EPSV instead of PORT (F)]' \
+  --digest'[Use HTTP Digest Authentication (H)]' \
+  --key'[Private key file name (SSL/SSH)]':<key> \
+  --ftp-ssl'[Try SSL/TLS for ftp transfer (F)]' \
+  --basic'[Use HTTP Basic Authentication (H)]' \
+  --ciphers'[SSL ciphers to use (SSL)]':<list> \
+  --pubkey'[Public key file name (SSH)]':<key> \
+  --tcp-nodelay'[Use the TCP_NODELAY option]' \
+  --ntlm'[Use HTTP NTLM authentication (H)]' \
+  --disable-epsv'[Inhibit using EPSV (F)]' \
+  --crlf'[Convert LF to CRLF in upload]' \
+  --url'[Set URL to work with]':<URL> \
+  --tlsv1.0'[Use TLSv1.0 (SSL)]' \
+  --tlsv1.1'[Use TLSv1.1 (SSL)]' \
+  --tlsv1.2'[Use TLSv1.2 (SSL)]' \
+  '*:URL:_urls' && rc=0
+
+return rc

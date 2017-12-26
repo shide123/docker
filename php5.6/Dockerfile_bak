@@ -1,0 +1,39 @@
+#
+# Dockerfile for building PHP7 images
+# 
+# https://github.com/addcn/docker-lnmp.git
+#
+
+FROM centos:centos7
+MAINTAINER dodo <lhuibo@gmail.com>
+
+ENV TZ "Asia/Shanghai"
+
+#Dir
+RUN mkdir -p /usr/local/nginx/html && mkdir -p /www && mkdir -p /var/lib/php/
+
+#Yum
+RUN yum -y install epel-release &&yum -y update && \
+    yum install -y gcc httpd automake autoconf libtool make gcc-c++ vixie-cron  wget zlib  file openssl-devel sharutils zip  bash vim cyrus-sasl-devel libmemcached libmemcached-devel libyaml libyaml-devel unzip libvpx-devel openssl-devel ImageMagick-devel  autoconf  tar gcc libxml2-devel gd-devel libmcrypt-devel libmcrypt mcrypt mhash libmcrypt libmcrypt-devel libxml2 libxml2-devel bzip2 bzip2-devel curl curl-devel libjpeg libjpeg-devel libpng libpng-devel freetype-devel bison libtool-ltdl-devel net-tools &&yum -y install libmcrypt libmcrypt-devel mcrypt mhash &&  yum -y install php-mcrypt &&yum clean all
+
+#Php
+#fix error: mcrypt.h not found
+
+RUN cd /tmp && \
+  wget http://cn.php.net/distributions/php-5.6.32.tar.gz && \
+  tar xzf php-5.6.32.tar.gz && yum -y install bison
+  cd /tmp/php-5.6.32 && ./configure --prefix=/usr/local/php  && make &&  make install
+
+#复制文件
+#RUN cp /tmp/php-5.6.32/php.ini-production /usr/local/php/lib/php.ini && \
+#    cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf && \
+    cp /usr/local/php/bin/php /usr/bin
+
+EXPOSE 9000
+
+
+#配置php
+RUN sed -i -e 's/listen = 127.0.0.1:9000/listen = 9000/' /usr/local/php/etc/php-fpm.d/www.conf
+
+#启动php
+ENTRYPOINT ["/usr/local/php/sbin/php-fpm", "-F", "-c", "/usr/local/php/lib/php.ini"]

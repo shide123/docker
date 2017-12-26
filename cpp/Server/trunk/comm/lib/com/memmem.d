@@ -1,0 +1,1 @@
+memmem.o: memmem.c

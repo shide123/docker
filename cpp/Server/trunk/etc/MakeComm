@@ -1,0 +1,61 @@
+#****************************************************************************
+#                                                                           *
+# MakeComm                                                                  *
+#                                                                           *
+# This is a public GNU make (gmake) makefile for DCL project                *
+#****************************************************************************
+
+#the prefix or suffix of all programs for DCL
+PREFIX := ql_
+SUFFIX := _ql
+
+WARNING_FLAGS := -Wall -Wno-sign-compare -Wno-deprecated -Wno-format 
+
+#common include directories
+INCLUDES := \
+	-I../worker \
+	-I../worker/protocols \
+	-I../comm/pcommon/public \
+	-I../comm/pcommon/net \
+	-I../comm/pcommon/log \
+	-I../comm/pcommon/static \
+	-I../comm/pcommon/redis \
+	-I../comm/pcommon/room \
+    -I../comm/pcommon/protobuf \
+	-I../comm/mysql \
+	-I../comm/lib \
+	-I../comm/lib/db \
+	-I../comm/lib/hiredis \
+	-I../comm/lib/SocketLite/src \
+	-I../comm/lib/openssl-1.0.1r \
+	-I../comm/lib/jsoncpp-0.10.2/include \
+	-I../comm/lib/curl-7.46.0/include/curl \
+	-I../comm/lib/libnode \
+	-I../comm/lib/libconhash \
+	-I../comm/lib/mongo/include \
+	-I./gen-cpp \
+	-I/home/boost_1_58_0/sdk/include \
+	-I../comm/pcommon/thrift	\
+	-I../comm/lib/libqinniu/include
+
+#common lib directories
+LIBDIR := \
+	-L../worker \
+	-L../comm/lib/com \
+	-L../comm/lib/db \
+	-L../comm/lib/SocketLite/src \
+	-L../comm/lib/libnode \
+	-L../comm/lib/jsoncpp-0.10.2/build/debug/src/lib_json \
+	-L../comm/lib/libconhash \
+	-L../comm/lib/mongo/lib \
+	-L/home/boost_1_58_0/sdk/lib \
+	-L/usr/local/openssl/lib \
+	-L/usr/local/lib \
+	-L/usr/lib \
+	-L../comm/lib/libqinniu/lib \
+	-L/usr/local/mysql-5.6.30/lib \
+	-lworker -lthrift -lthriftnb -levent -lqiniu -lcurl
+
+
+vpath %.cpp ../comm/pcommon/net:../comm/pcommon/public:../comm/pcommon/redis:../comm/pcommon/log:../comm/pcommon/static:../comm/pcommon/room:../comm/pcommon/thrift:./gen-cpp
+vpath %.cc ../comm/pcommon/protobuf

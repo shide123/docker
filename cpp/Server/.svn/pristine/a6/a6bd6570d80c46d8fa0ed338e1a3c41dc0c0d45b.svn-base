@@ -1,0 +1,12 @@
+[self]
+svrid=1001
+workproc=1
+dbconnthread=2
+protocol=Frame
+startport=6700
+
+[log]
+logmode=1
+loglevel=1
+usesyslog=0
+

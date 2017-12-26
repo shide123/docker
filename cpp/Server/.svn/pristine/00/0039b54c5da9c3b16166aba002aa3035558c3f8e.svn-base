@@ -1,0 +1,17 @@
+[self]
+startport=6130
+rpcport=16130
+workproc=5
+protocol=Frame
+
+[server]
+svr_name=roomsvr_mc_rpc,consumesvr_mc_rpc,chatsvr_mc_rpc,usermgrsvr_mc_rpc
+ip_expression=.*
+
+[cmd]
+cmdrange_1=5000:5199
+
+[log]
+logmode=2
+loglevel=1
+usesyslog=1

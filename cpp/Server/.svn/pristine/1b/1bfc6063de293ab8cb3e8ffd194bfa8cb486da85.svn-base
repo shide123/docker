@@ -1,0 +1,496 @@
+syntax = "proto3";
+option optimize_for = SPEED;
+option java_package = "com.dream.cube.tcp";
+import "Common.proto";
+/*
+C++_TYPE	proto_TYPE
+float		float
+char*		string
+bytes		string
+int8		int32
+int		    int32
+int16		int32
+int32		int32
+uint8		uint32
+uint16		uint32
+uint32		uint32
+int64		int64
+uint64		uint64
+bool 		bool
+string 		string
+*/
+
+/*
+repeated	array
+*/
+
+/*
+protoc --cpp_out=.  this.proto
+*/
+
+enum e_MsgState
+{
+    e_NotNeed       = 0;
+    e_NeedHandle    = 1;
+    e_NotAdminAgree = 2;
+    e_AdminAgree    = 3;
+    e_Reject        = 4;
+}
+
+enum e_AssistMsgType
+{
+    e_SystemType    = 0;  //系统类型
+    e_ViewType      = 1;  //查看类型
+    e_AgreeType	    = 2;  //同意or拒绝类型
+}
+
+//单条聊天消息结构体
+message ChatMsg_t
+{
+    UserInfo_t srcUser  = 1;   //消息发起者
+    UserInfo_t dstUser  = 2;   //聊天对象
+    uint32 msgId        = 3;   //服务器msgid
+    uint32 msgTime      = 4;   //聊天时间
+    e_MsgType msgType   = 5;   //消息类型
+    string content      = 6;   //聊天内容
+    repeated uint32 atList = 7;    //@人列表，0是所有人
+    string msgTimeStr   = 8;   //聊天时间字符串格式,客户端SDK填,服务端不填
+    uint64 clientMSgId	= 9;	//客户端msgid
+	bool recall			= 10;	//是否已撤回
+	uint32 sendState	= 11;	//发送状态：0 成功，1 发送中，2 发送失败（客户端自用）
+	uint32 mediaLength=12;//媒体长度	
+	uint32 mastermsgId        = 13;   //父消息记录msgid
+
+	int32 extendType=14;//值为1时表示文字或者语音标为重点, 当需要取消重点或者重新划上重点时,msgType填17,该值填为零或者1;
+}
+
+/******************私聊协议 begin******************/
+//发起新私聊消息 Sub_Vchat_PrivateMsgReq 3000
+message CMDPrivateMsgReq
+{
+    ChatMsg_t msg      = 20;   //聊天消息
+}
+//服务端收到新私聊消息反馈 Sub_Vchat_PrivateMsgRecv 3001
+message CMDPrivateMsgRecv
+{
+    uint32 dstUId  = 1;    //聊天对象userid
+    uint32 msgId   = 2;    //服务器msgid
+    uint64 clientMSgId = 3;	//客户端msgid
+}
+//新私聊消息提示 Sub_Vchat_PrivateMsgNotify 3002
+message CMDPrivateMsgNotify
+{
+    ChatMsg_t msg        = 20;  //聊天消息
+}
+
+//客户端收到新私聊消息提示反馈 Sub_Vchat_PrivateMsgNotifyRecv 3003
+message CMDPrivateMsgNotifyRecv
+{
+    uint32 rcvUId   = 1;   //接收者userid
+    uint32 srcUId   = 2;   //消息发出者userid
+    uint32 msgId    = 3;   //服务器msgid（如果收到的是数组，则反馈最大的msgid）
+}
+
+//请求用户未读的私聊消息（登录时使用）Sub_Vchat_UnreadPrivateMsgReq 3004
+message CMDUnreadPrivateMsgReq
+{
+    uint32 userId     = 1;    //用户id
+}
+
+//用户未读的私聊消息提示 Sub_Vchat_UnreadPrivateMsgNotify 3005
+message CMDUnreadPrivateMsgNotify
+{
+    uint32 dstUId         = 1;   //聊天对象userid
+    uint32 unreadCount    = 2;   //总的未读消息个数
+    repeated ChatMsg_t  msgs = 20;  //聊天消息
+}
+
+//客户端收到用户未读的私聊消息提示反馈 Sub_Vchat_PrivateMsgNotifyRecv 3003
+//同 CMDPrivateMsgNotifyRecv
+
+//请求历史私聊消息 Sub_Vchat_PrivateMsgHisReq 3006
+message CMDPrivateMsgHisReq
+{
+    uint32 reqUId    = 1;   //请求发起者userid
+    uint32 dstUId    = 2;   //聊天对象userid
+    bool   forward   = 3;   //true 向前查找，false 向后查找
+    uint32 msgId     = 4;   //服务器msgid(请求该msgid之前（或之后）的聊天记录，填0则从最新的（最初的）聊天记录开始请求)
+    uint32 count     = 5;   //请求数量
+}
+//历史私聊消息反馈 Sub_Vchat_PrivateMsgHisResp 3007
+message CMDPrivateMsgHisResp
+{
+    uint32 reqUId         = 1;   //请求发起者userid
+    uint32 dstUId         = 2;   //聊天对象userid
+    bool   needClear      = 3;   //是否需要清理聊天窗口（客户端使用，服务端不用）
+    repeated ChatMsg_t  msgs = 20;  //聊天内容数组
+}
+/******************私聊协议 end******************/
+
+/******************群聊协议 begin****************/
+//发起新群组消息 Sub_Vchat_GroupMsgReq 3010
+//发起新围观消息 Sub_Vchat_GroupOnlookerChatReq 3030
+message CMDGroupMsgReq
+{
+    uint32 groupId  = 1;    //群组id
+    ChatMsg_t msg      = 20;   //聊天消息
+}
+//服务端收到新群组消息反馈 Sub_Vchat_GroupMsgRecv 3011
+message CMDGroupMsgRecv
+{
+    uint32 groupId  = 1;   //群组id
+    uint32 msgId    = 2;   //服务器msgid
+    uint64 clientMSgId = 3;	//客户端msgid
+	CMDErrCode errInfo	= 4;	//结果，0:成功，其他:失败
+}
+//新群组消息提示 Sub_Vchat_GroupMsgNotify 3012
+//新围观消息提示 Sub_Vchat_GroupOnlookerChatNotify 3031
+message CMDGroupMsgNotify
+{
+    uint32 groupId  = 1;   //群组id
+    ChatMsg_t msg      = 20;  //聊天消息
+}
+//客户端收到新群组消息提示反馈 Sub_Vchat_GroupMsgNotifyRecv 3013
+message CMDGroupMsgNotifyRecv
+{
+    uint32 rcvUId   = 1;   //接收者userid
+    uint32 groupId  = 2;   //群组id
+    uint32 msgId    = 3;   //服务器msgid
+}
+//请求用户未读的群聊消息 Sub_Vchat_UnreadGroupMsgReq 3014
+message CMDUnreadGroupMsgReq
+{
+    uint32 userId   = 1;    //用户id
+    uint32 groupId  = 2;    //群组id
+}
+//用户未读的群聊消息提示 Sub_Vchat_UnreadGroupMsgNotify 3015
+message CMDUnreadGroupMsgNotify
+{
+    uint32 groupId       = 1;    //群组id
+    uint32 unreadCount   = 2;    //总的未读消息个数
+	repeated uint32 atMsgIdList = 19;	 //涉及@我的msgid列表
+    repeated ChatMsg_t msgs = 20;   //聊天消息
+}
+
+//客户端收到用户未读的群聊消息提示反馈 Sub_Vchat_GroupMsgNotifyRecv 3013
+//同 CMDGroupMsgNotifyRecv
+
+//请求历史群组消息 Sub_Vchat_GroupMsgHisReq 3016
+message CMDGroupMsgHisReq
+{
+    uint32 userId   = 1;   //请求发起者userid
+    uint32 groupId  = 2;   //群组id
+    bool   forward  = 3;   //true 向前查找，false 向后查找
+    uint32 msgId    = 4;   //服务器msgid(请求该msgid之前（或之后）的聊天记录，填0则从最新的（最初的）聊天记录开始请求)
+    uint32 count    = 5;   //请求数量
+    int64 queryTime= 6;  //要查询的日期
+    bool reverseMsgOrder = 7; // 标识是否要倒排消息内容
+    string reqTag = 8; // 客户端自用标识字段
+}
+//历史群组消息反馈 Sub_Vchat_GroupMsgHisResp 3017
+message CMDGroupMsgHisResp
+{
+    uint32 groupId  = 1;   //群组id
+    bool   needClear      = 2;   //是否需要清理聊天窗口（客户端使用，服务端不用）
+    uint32 hisMsgCount	= 3;
+    repeated ChatMsg_t  msgs = 20;  //聊天内容数组（可能为0）
+    string courseInfo=21;//ppt图片信息放在这里
+    bool reverseMsgOrder = 22; // 标识是否要倒排消息内容
+    string reqTag = 23; // 客户端自用标识字段
+}
+
+//群 未读群聊/私聊消息发送完成 Sub_Vchat_GroupUnreadMsgEnd = 3018
+//message CMDUInt32
+
+/******************群聊协议 end******************/
+
+
+/******************群内私聊协议 begin******************/
+//发起新群组私聊消息 Sub_Vchat_GroupPrivateMsgReq 3020
+message CMDGroupPrivateMsgReq
+{
+    uint32 groupId  = 1;    //群组id
+    ChatMsg_t msg      = 20;   //聊天消息
+}
+//服务端收到新群组私聊消息反馈 Sub_Vchat_GroupPrivateMsgRecv 3021
+message CMDGroupPrivateMsgRecv
+{
+    uint32 groupId = 1;    //群组id
+    uint32 dstUId  = 2;    //聊天对象userid
+    uint32 msgId   = 3;    //服务器msgid
+    uint64 clientMSgId = 4;	//客户端msgid
+    CMDErrCode errInfo = 5;	//错误码，0 成功，其他 失败
+    uint32 threshold = 6;	//对象私聊亲密度门槛，errid为2052时有效
+    uint32 intimacy = 7;    //当前亲密度，errid为2052时有效
+}
+//新群组私聊消息提示 Sub_Vchat_GroupPrivateMsgNotify 3022
+message CMDGroupPrivateMsgNotify
+{
+    uint32 groupId    = 1;    //群组id
+    ChatMsg_t msg     = 20;  //聊天消息
+}
+
+//客户端收到新群组私聊消息提示反馈 Sub_Vchat_GroupPrivateMsgNotifyRecv 3023
+message CMDGroupPrivateMsgNotifyRecv
+{
+    uint32 groupId  = 1;   //群组id
+    uint32 rcvUId   = 2;   //接收者userid
+    uint32 srcUId   = 3;   //消息发出者userid
+    uint32 dstUId   = 4;   //聊天对象userid
+    uint32 msgId    = 5;   //服务器msgid（如果收到的是数组，则反馈最大的msgid）
+}
+
+//用户未读的群组私聊消息提示 Sub_Vchat_UnreadGroupPrivateMsgNotify 3025
+message CMDUnreadGroupPrivateMsgNotify
+{
+    uint32 groupId        = 1;   //群组id
+    uint32 dstUId         = 2;   //聊天对象userid
+    uint32 unreadCount    = 3;   //总的未读消息个数
+    repeated ChatMsg_t  msgs = 20;  //聊天消息
+}
+
+//客户端收到用户未读的群组私聊消息提示反馈 Sub_Vchat_GroupPrivateMsgNotifyRecv 3023
+//同 CMDGroupPrivateMsgNotifyRecv
+
+//请求群组历史私聊消息 Sub_Vchat_GroupPrivateMsgHisReq 3026
+message CMDGroupPrivateMsgHisReq
+{
+    uint32 groupId   = 1;   //群组id
+    uint32 reqUId    = 2;   //请求发起者userid
+    uint32 dstUId    = 3;   //聊天对象userid
+    bool   forward   = 4;   //true 向前查找，false 向后查找
+    uint32 msgId     = 5;   //服务器msgid(请求该msgid之前（或之后）的聊天记录，填0则从最新的（最初的）聊天记录开始请求)
+    uint32 count     = 6;   //请求数量
+    bool reverseMsgOrder = 7; // 标识是否要倒排消息内容
+    string reqTag = 8; // 客户端自用标识字段
+}
+
+//历史群组私聊消息反馈 Sub_Vchat_GroupPrivateMsgHisResp 3027
+message CMDGroupPrivateMsgHisResp
+{
+    uint32 groupId        = 1;   //群组id
+    uint32 reqUId         = 2;   //请求发起者userid
+    uint32 dstUId         = 3;   //聊天对象userid
+    bool   needClear      = 4;   //是否需要清理聊天窗口（客户端使用，服务端不用）
+    repeated ChatMsg_t  msgs = 20;  //聊天内容数组
+    bool reverseMsgOrder = 21; // 标识是否要倒排消息内容
+    string reqTag = 22; // 客户端自用标识字段
+}
+
+//用户群私聊资格查询 Sub_Vchat_GroupPChatQualiticationReq 3051
+message CMDGroupPChatQualiticationReq
+{
+	uint32 groupid	= 1;	//群id
+	uint32 userid	= 2;	//用户id
+	uint32 dstuid	= 3;	//对象id
+}
+
+//用户群私聊资格应答 Sub_Vchat_GroupPChatQualiticationResp 3052
+message CMDGroupPChatQualiticationResp
+{
+	CMDErrCode errInfo	= 1;	//结果，0 可以私聊，其他不能私聊
+	uint32 groupid	= 2;	//群id
+	uint32 userid	= 3;	//用户id
+	uint32 dstuid	= 4;	//对象id
+	uint32 threshold = 5;	//对象私聊亲密度门槛，errid为2052时有效
+	uint32 intimacy	= 6;	//当前亲密度，errid为2052时有效
+}
+
+/******************群组私聊协议 end******************/
+
+//用户删除聊天消息	Sub_Vchat_DeleteChatMsgHis	3053
+message CMDDeleteChatMsgHis
+{
+	uint32 groupid	= 1;	//群id
+	uint32 userid	= 2;	//用户id
+	uint32 dstuid	= 3;	//聊天对象id（群聊传0）
+}
+
+message CMDDeleteChatMsgHisResp
+{
+	CMDErrCode errInfo = 1;	//结果，0 成功，其他 失败
+	CMDDeleteChatMsgHis req = 2;	//请求内容
+}
+
+/******************群助手协议 begin******************/
+//单条群助手消息结构体
+message GPAssistMsg_t
+{
+    uint32 msgId         = 1;   //服务器msgid
+    uint32 msgTime       = 2;   //创建时间
+    string msg           = 3;   //消息内容
+    string url           = 4;   //url
+    e_MsgState state     = 5;
+    string title         = 6;
+    string icon          = 7;
+    e_AssistMsgType msgType = 8;
+    uint32 authID        = 9;   //认证ID,对应mc_authentication的id
+    string action        = 10;  //action
+}
+
+//请求用户未读的群助手消息提示 Sub_Vchat_UnreadGPAssistMsgReq 3044
+message CMDUnreadAssistMsgReq
+{
+	uint32 userid        = 1;	//用户id
+}
+
+//客户端未读的群助手消息提示 Sub_Vchat_UnreadGPAssistMsgNotify 3039
+message CMDUnreadAssistMsgNotify
+{
+    uint32 unreadCount = 1;             //总的未读消息个数
+    repeated GPAssistMsg_t msgs = 2;    //未读群助手消息
+}
+
+//新群助手消息提示 Sub_Vchat_GPAssistMsgNotify 3040
+message CMDGroupAssistMsgNotify
+{
+    GPAssistMsg_t msg = 1;             //群助手消息
+}
+
+//客户端收到新群助手消息提示反馈 Sub_Vchat_GPAssistMsgNotifyRecv 3041
+message CMDAssistMsgNotifyRecv
+{
+    uint32 rcvUId   = 1;   //接收者userid
+    uint32 msgId    = 2;   //服务器msgid（如果收到的是数组，则反馈最大的msgid）
+}
+
+//客户端同步群助手里的审核状态请求 Sub_Vchat_GPAssistMsgStateReq 3042
+message CMDGroupAssistMsgStateReq
+{
+    uint32 userID          = 1;   //用户ID
+    repeated uint32 msgIds = 2;   //请求同步群助手的消息ID列表
+}
+
+//服务器广播在线admin的群助手的审核状态 Sub_Vchat_GPAssistMsgStateNotify 3047
+message MsgState_t
+{
+    uint32 msgId           = 1;   //群助手msgid
+    e_MsgState state       = 2;   //群助手msg状态
+    e_MsgType msgType      = 3;   //群助手消息类型
+}
+
+//客户端同步群助手的审核状态反馈 Sub_Vchat_GPAssistMsgStateResp 3043
+message CMDGroupAssistMsgStateResp
+{
+    uint32 userID			= 1;
+    repeated MsgState_t msgIdStates = 2;
+}
+
+//用户查询群助手消息列表请求 Sub_Vchat_GPAssistMsgHisReq 3045
+message CMDGPAssistMsgHisReq
+{
+    uint32 userID    = 1;   //请求发起者userid
+    bool   forward   = 2;   //true 向前查找，false 向后查找
+    uint32 msgId     = 3;   //服务器msgid(请求该msgid之前（或之后）的聊天记录，填0则从最新的（最初的）聊天记录开始请求)
+    uint32 count     = 4;   //请求数量
+}
+
+//用户查询群助手消息列表反馈 Sub_Vchat_GPAssistMsgHisResp 3046
+message CMDGPAssistMsgHisResp
+{
+    uint32 userID    = 1;   //请求发起者userid
+    repeated GPAssistMsg_t msgs = 2;    //群助手消息列表
+}
+
+enum e_InvestType
+{
+    e_Photo         = 0;
+    e_ViewAuth      = 1;
+}
+
+//邀请用户上传图片或视频认证请求 Sub_Vchat_GroupInvestUserReq 3048
+message CMDGroupInvestUserReq
+{
+    uint32 groupID    = 1;   //群ID
+    uint32 to_userID  = 2;   //邀请的用户ID
+    e_InvestType investType  = 3;   //邀请类型
+    uint32 run_userID = 4;
+}
+
+//邀请用户上传图片或视频认证反馈 Sub_Vchat_GroupInvestUserResp 3049
+message CMDGroupInvestUserResp
+{
+    uint32 groupID    = 1;   //群ID
+    uint32 to_userID  = 2;   //邀请的用户ID
+    e_InvestType investType = 3;   //邀请类型
+    CMDErrCode errInfo      = 4;   //错误码
+}
+
+/******************群助手协议 end********************/
+
+
+/******************通知消息协议 begin********************/
+//系统消息结构体
+message CMDNoticeMsg
+{
+	uint32 msgid	= 1;	//服务器msgid
+	uint32 type		= 2;	//通知类型：1系统公告，2活动公告，3版本通知，10用户账户异动
+	string content	= 3;	//消息内容
+	string action	= 4;	//消息点击动作
+	uint32 time		= 5;	//消息时间
+	uint32 endTime	= 6;	//结束时间
+}
+
+//Sub_Vchat_SysNoticeMsgNotify = 5000,	系统通知提示
+message CMDSysNoticeMsgNotify
+{
+	CMDNoticeMsg msg = 1;	//系统消息内容
+}
+
+//Sub_Vchat_UnreadSysNoticeMsgNotify = 5001，未读系统通知提示
+message CMDUnreadSysNoticeMsgNotify
+{
+	repeated CMDNoticeMsg msgs = 1;   //系统通知列表
+}
+
+//Sub_Vchat_SysNoticeMsgNotifyRecv = 5002,	客户端收到系统消息反馈（实时&未读）
+message CMDNoticeMsgNotifyRecv
+{
+	uint32 userid	= 1;	//用户id
+	uint32 msgid	= 2;	//收到的msgid
+}
+
+//Sub_Vchat_UserNoticeMsgNotify = 5003,	用户相关通知消息提示
+message CMDUserNoticeMsgNotify
+{
+	uint32 userid	= 1;	//用户id
+	CMDNoticeMsg msg= 2;	//消息内容
+}
+
+//Sub_Vchat_UnreadUserNoticeMsgNotify = 5004，未读的用户相关通知消息提示
+message CMDUnreadUserNoticeMsgNotify
+{
+	uint32 userid	= 1;	//用户id
+	repeated CMDNoticeMsg msgs = 2;    //消息列表
+}
+
+//Sub_Vchat_UserNoticeMsgNotifyRecv = 5005,	客户端收到用户系统消息反馈
+//message CMDNoticeMsgNotifyRecv
+
+//Sub_Vchat_UnreadNoticeMsgReq = 5006,	请求用户未读的系统消息（包含个人）
+message CMDUnreadNoticeMsgReq
+{
+	uint32 userid		= 1;	//用户id
+	string appVersion	= 2;	//用户app版本号
+	uint32 osPlatform	= 3;	//0:PC端 1:安卓 2:IOS 3:WEB
+	string osVersion	= 4;	//用户系统版本号
+}
+
+message PPTCoursePicInfo
+{
+	string  picId	= 1;	// 图片唯一标识（七牛的id）
+	uint32  groupId	= 2;	// 课程直播间id
+	int32   rank	= 3;	// 排序
+	string  picurl  = 4;	// 七牛图片完整url
+	uint32  dbId    = 5;	// 图片在数据库的id
+}
+//ppt图片变动事件通知 Sub_Vchat_PPTPicChangeNotify3055,
+message CMDPPTPicChangeMsgNotify
+{
+	uint32 optType	= 1;	//操作类型 1 增加 ；2删除；3修改
+	repeated PPTCoursePicInfo vecpics = 2;    //图片列表
+	
+}
+
+
+/******************通知消息协议 end********************/

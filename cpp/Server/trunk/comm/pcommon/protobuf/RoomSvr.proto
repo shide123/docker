@@ -1,0 +1,732 @@
+syntax = "proto3";
+option optimize_for = SPEED;
+option java_package = "com.dream.cube.tcp";
+/*
+C++_TYPE	proto_TYPE
+float		float
+char*		string
+bytes		string
+int8		int32
+int		    int32
+int16		int32
+int32		int32
+uint8		uint32
+uint16		uint32
+uint32		uint32
+int64		int64
+uint64		uint64
+bool 		bool
+string 		string
+*/
+
+/*
+repeated	array
+*/
+
+/*
+protoc --cpp_out=.  this.proto
+*/
+import "Common.proto";
+message CMDJoinRoomReq
+{
+	 int32 userid = 1;         //用户id,可能是靓号id,可能是游客号码
+	 int32 vcbid = 2;          //房间id
+	 int32 devtype = 3;      //0:PC端 1:安卓 2:IOS 3:WEB
+	 int32 time = 4;
+	 int32 crc32 = 5;
+	 int32 coremessagever = 6;     //客户端内核版本
+	 string   cuserpwd = 7;   //用户密码,没有就是游客
+	 string   croompwd = 8;   //房间密码,可能有
+	 string   cSerial = 9;    //uuid
+	 string   cMacAddr = 10;   //客户端mac地址
+	 string   cIpAddr = 11;	  //客户端ip地址
+	 int32   bloginSource = 12;         //local 99 login or other platform login:0-local;1-other platform
+	 int32   reserve1 = 13;
+	 int32   reserve2 = 14;
+};
+
+//加入房间响应
+message CMDJoinRoomResp
+{
+	uint32 userid			= 1;	//用户id
+	uint32 vcbid			= 2;	//房间id
+	uint32 roomtype			= 3;	//房间类型
+	uint32 busepwd			= 4;	//是否需要房间密码
+	uint32 bIsCollectRoom	= 5;	//是否被该用户收藏
+	uint32 devtype			= 6;	//设备类型 PC端 1:安卓 2:IOS 3:WEB
+	uint32 seats			= 7;	//总人数
+	uint32 groupid			= 8;	//组id,可以用来做区长判断?
+	uint32 runstate			= 9;	//房间管理状态
+	uint32 creatorid		= 10;	//房主
+	uint32 op1id			= 11;	//副房主
+	uint32 op2id			= 12;
+	uint32 op3id			= 13;
+	uint32 op4id			= 14;
+	uint32 inroomstate		= 15;	//加入房间后在房间状态,目前只有使用到隐身状态解析.
+	int64 nk				= 16;	//用户余额,nk
+	int64 nb				= 17;	//用户余额,nb
+	int64 nlotterypool		= 18;	//幸运奖池彩金
+	int32 nchestnum			= 19;	//用户现有宝箱个数
+	string cname			= 20;	//房间名字
+	string cmediaaddr		= 21;	//媒体服务器地址
+	string cpwd				= 22;
+	uint64 npopularity_		= 23;	//房间围观人数
+	uint32 ncollect_times	= 24;	//房间收藏次数(粉丝数)
+	uint32 userRoleType		= 25;	//该用户在群里等级
+	string groupIcon		= 26;	//群头像
+	uint32 groupShowID		= 27;	//群showID
+	uint32 muteSwitch		= 28;	//群免打扰开关
+	string liveUrl          = 29;   //拉流地址
+};
+
+message CMDGateJoinRoomReq
+{
+	int32 userid = 1;				//用户id
+	int32 vcbid = 2;				//房间id
+	string cIpAddr = 3;				//客户端ip地址
+	string uuid = 4;				//uuid
+	int32 devtype = 5;				//客户端类型	//0:PC端 1:安卓 2:IOS 3:WEB
+	int32 micuserid = 6;				//上麦用户
+	int32 micstate = 7;				//麦克状态,注意下面的麦状态标志
+	int32 micindex = 8;
+};
+message CMDGateJoinRoomResp
+{
+	 int32 userid = 1;				//用户id
+	 int32 vcbid = 2;				//房间id
+	 CMDErrCode errInfo = 3;			//错误id (0:成功,否则失败)
+};
+message CMDJoinRoomErr
+{
+	int32 userid = 1;
+	int32 vcbid = 2;
+	CMDErrCode errInfo = 3;
+	int32 data1 = 4;
+	int32 data2 = 5;
+};
+
+message CMDUserMicState
+{
+	uint32 vcbid = 1;
+	UserInfo_t runid = 2;
+	UserInfo_t toid = 3;  //上麦用户
+	int32  giftid = 4;    //使用礼物id
+	int32  giftnum = 5;   //礼物num
+	int32  micstate = 6;  //麦克状态,注意下面的麦状态标志
+	int32  micindex = 7;  //麦克序号(notify中有数据),新修改,上麦时可以指定麦序(公麦时0~2), -1:不指定
+	int32  optype = 8;    //操作类型,注意: 加入了该字段后就表示这个信令不是简单的上麦了
+	//gcz++ 要新加参数,是不是从排麦中(第几个micid, 0-表示不是, 1..n 就是第几个麦id) 转成公麦的(如果是newmic=公麦)
+	int32  reserve11 = 9; //空白
+	CMDErrCode errInfo = 10;
+	int32 micsecond = 11;//-1 unlimited 
+};
+
+message CMDUpWaitMic
+{
+	uint32  vcbid		= 1;
+	uint32  ruunerid	= 2;
+	uint32  touser		= 3;
+	int32   nmicindex	= 4;   //-1,默认(插麦到最后一个);1-同时插入到第一个
+	CMDErrCode errInfo	= 5;
+};
+
+message CMDUpWaitMicList
+{
+	uint32 	size = 1;
+	repeated UserInfo_t  userid = 2;
+	uint32 	vcbid = 3;
+};
+
+message CMDMicStateListReq
+{
+	uint32 		vcbid = 1;
+};
+
+message CMDMicStateListResp
+{
+	message PubMic
+	{
+		UserInfo_t userinfo	= 1;
+		int32 status		= 2;
+	}
+	uint32		vcbid = 1;
+	repeated PubMic  pubmic = 2;
+};
+
+//房间人员列表的数据体
+message CMDRoomUserInfo
+{
+	uint32 	userid = 1;			//用户id,可能是靓号id
+	uint32 	vcbid = 2;			//房间id
+	uint32   userlevel = 3;			//角色身份 0：游客 10：正式成员 20：嘉宾  30：管理员  40：群主
+	uint32   userviplevel = 4;		//vip等级（黄金vip，白金vip）
+	uint32   gender = 5;			//性别,
+	uint32   devtype = 6;			//设备类型
+	uint32   pubmicindex = 7;		//公麦位置
+	uint32   roomlevel = 8;			//房间等级
+	uint32   usertype = 9;			//用户类型: 普通 机器人
+	uint32 	cometime = 10;			//进入房间时间
+	string 	chead  = 11;			//用户头像
+	uint32 	userstate = 12;			//用户状态,组合标志
+	int32  	bforbidchat = 13;		//禁言
+	string   useralias = 14;		//昵称
+	uint32	authState = 15;		//认证状态
+	string  videoUrl = 16;		//认证视频url
+};
+
+message CMDRoomUserInfos
+{
+	repeated CMDRoomUserInfo UserInfo = 1;
+};
+
+message CMDUserExitRoomInfo
+{
+	uint32 userid = 1;
+	uint32 vcbid = 2;
+};
+
+message CMDUserExitRoomInfo_ext
+{
+	uint32 userid   = 1;
+	uint32 vcbid    = 2;
+	uint32 roleType = 3;
+};
+
+//Sub_Vchat_RoomUserExceptExitReq = 2090, 用户异常退出,gateway通知roomsvr
+message CMDUserExceptExitRoomInfo
+{
+	uint32 userid	= 1;
+	uint32 vcbid	= 2;
+}
+
+message CMDOperateWaitMic
+{
+	uint32  vcbid		= 1;
+	uint32  ruunerid	= 2;
+	uint32  userid		= 3;
+	int32   micid		= 4;      //该用户的第几个麦序
+	int32   optype		= 5;     //操作类型: -3,清除所有麦序?,-2 删除该用户的所有麦序,-1,删除该麦序,1-up,2-down,3-top,4-button
+};
+
+//设置排序用户index的响应/错误消息
+message CMDChangeWaitMicIndexResp
+{
+	uint32  vcbid		= 1;
+	CMDErrCode errInfo	= 2;     //错误代码
+};
+
+//设置排序用户index的通知消息
+message CMDChangeWaitMicIndexNoty
+{
+	uint32 vcbid = 1;
+	uint32 ruunerid = 2;
+	uint32 userid = 3;
+	int32  micid = 4;      //该用户的第几个麦序
+	int32  optype = 5;     //操作类型: -3,清除所有人所有麦序?,-2 删除该用户的所有麦序,-1,删除该麦序,1-up,2-down,3-top,4-button
+};
+
+message CMDRoomMicModSet
+{
+	int32 vcbid = 1;
+	int32 micstatus = 2;	//free chairman 
+}
+
+//Sub_Vchat_RoomKickoutUserReq = 2013, 踢出用户请求
+message CMDUserKickoutRoomInfo
+{
+	uint32 vcbid = 1;
+	uint32 srcid = 2;
+	uint32 toid = 3;
+	int32  resonid = 4; 
+	int32  mins = 5;         //提出时间id,自输入(0~255分钟)
+};
+
+//Sub_Vchat_RoomKickoutUserResp = 2014, 踢出用户反馈
+message CMDUserKickoutRoomResp
+{
+	CMDErrCode errInfo	= 1;
+	uint32 vcbid		= 2;
+	uint32 srcid		= 3;
+	uint32 toid		= 4;	
+}
+
+//Sub_Vchat_SetRoomInfoReq = 2055, 设置房间信息请求
+message CMDRoomInfoReq
+{
+	uint32 vcbid = 1;
+	uint32 runnerid = 2;
+	CMDString roomname = 3;
+	CMDString roomnotice = 4;
+	CMDString roomremark = 5;
+};
+
+//Sub_Vchat_SetRoomInfoResp = 2056, 设置房间信息反馈
+message CMDRoomInfoResp
+{
+	uint32 vcbid		= 1;
+	uint32 runnerid		= 2;
+	CMDErrCode errInfo	= 3;
+};
+
+message CMDNoticeInfo
+{
+	uint32 noticeUserID		= 1;
+	string roomNotice		= 2;
+	uint32 noticeTime		= 3;
+}
+
+//Sub_Vchat_RoomInfoNotify = 2025, 房间信息资料
+message CMDRoomBaseInfo
+{
+	uint32 vcbid			= 1;	//群id
+	uint32 seats			= 2;    //总人数
+	uint32 creatorid		= 3;	//创建者userid
+	uint32 opstate			= 4;	//99乐投的房间操作状态
+	CMDString roomname		= 5;	//群名称
+	CMDString icon			= 6;	//群图标
+	CMDNoticeInfo noticeInfo	= 7;	//群公告
+	CMDString roomremark		= 8;	//群描述
+};
+
+//Sub_Vchat_GroupMemberReq=2170,用户请求群成员列表
+message CMDGroupMemberReq
+{
+	uint32	userID		= 1;	//玩家ID
+	uint32	groupID		= 2;	//群ID
+}
+
+//Sub_Vchat_RoomUserListBegin    = 2005 , 列表开始
+//Sub_Vchat_RoomUserListResp     = 2006 , 列表
+//Sub_Vchat_RoomUserListFinished = 2007 , 列表结束
+
+//Sub_Vchat_QryUserGroupInfoReq	=2174, 用户群信息请求
+message CMDUserGroupInfoReq
+{
+	uint32	userID		= 1;	//玩家ID
+	uint32	groupID		= 2;	//群ID
+}
+
+//Sub_Vchat_QryUserGroupInfoResp = 2175,	用户群信息响应
+message CMDUserGroupInfoResp
+{
+	CMDErrCode errInfo		= 1;		//errID
+	CMDRoomUserInfo userInfo	= 2;		//用户群信息
+}
+
+//Sub_Vchat_SetGroupMsgMuteReq   = 2176,	设置群消息免打扰
+message CMDSetGroupMsgMuteReq
+{
+	uint32	userID			= 1;		//用户ID
+	uint32	groupID			= 2;		//群ID
+	uint32	muteSet			= 3;		//0表示关闭 1表示打开
+}
+
+//Sub_Vchat_SetGroupMsgMuteResp   = 2177, 	设置群消息免打扰响应
+message CMDSetGroupMsgMuteResp
+{
+	CMDErrCode errInfo		= 1;		//错误码
+	uint32	userID			= 2;		//用户ID
+	uint32	groupID			= 3;		//群ID
+}
+
+//Sub_Vchat_QuitGroupReq = 2178,	退出群请求
+message CMDQuitGroupReq
+{
+	uint32	userID			= 1;		//用户ID
+	uint32	groupID			= 2;		//群ID
+}
+
+//Sub_Vchat_QuitGroupResp = 2179,	退出群响应
+message CMDQuitGroupResp
+{
+	CMDErrCode errInfo		= 1;		//错误码
+	uint32	userID			= 2;		//用户ID
+	uint32	groupID			= 3;		//群ID
+}
+
+//Sub_Vchat_SetUserPriorityReq = 2042,	设置用户等级
+message CMDSetUserPriorityReq
+{
+	uint32	run_userID		= 1;		//操作用户ID
+	uint32	to_userID		= 2;		//对象用户ID
+	uint32	groupID			= 3;		//群ID
+	uint32	roleType		= 4;		//对象用户角色(0：游客 10：正式成员 20：嘉宾  30：管理员  40：群主)
+}
+
+//Sub_Vchat_SetUserPriorityResp = 2043, 设置用户权限反馈
+message CMDSetUserPriorityResp
+{
+	CMDErrCode errInfo		= 1;		//错误码
+	uint32	run_userID		= 2;		//操作用户ID
+	uint32	to_userID		= 3;		//对象用户ID
+	uint32	groupID			= 4;		//群ID
+	uint32	roleType		= 5;		//对象用户角色(0：游客 10：正式成员 20：嘉宾  30：管理员  40：群主)
+}
+//2044
+message CMDSetUserPriorityNoty
+{
+	uint32	run_userID		= 1;		//操作用户ID
+	uint32	to_userID		= 2;		//对象用户ID
+	uint32	groupID			= 3;		//群ID
+	uint32	roleType		= 4;		//对象用户角色(0：游客 10：正式成员 20：嘉宾  30：管理员  40：群主)
+}
+//Sub_Vchat_QryGroupVisitCountReq = 2180, 查询群里观众数请求
+message CMDQryGroupVisitCountReq
+{
+	uint32 groupID			= 1;		//群ID
+}
+
+//Sub_Vchat_QryGroupVisitCountResp = 2181, 查询群里观众数响应
+message CMDQryGroupVisitCountResp
+{
+	uint32 groupID			= 1;		//群ID
+	uint32 visitCount		= 2;		//围观人数
+}
+
+//Sub_Vchat_JoinGroupReq = 2182, 申请加入群请求
+message CMDJoinGroupReq
+{
+	uint32	userID			= 1;		//用户ID
+	uint32	groupID			= 2;		//群ID
+}
+
+//Sub_Vchat_JoinGroupResp = 2183, 申请加入群响应
+message CMDJoinGroupResp
+{
+	CMDErrCode errInfo		= 1;		//错误码
+	uint32	userID			= 2;		//用户ID
+	uint32	groupID			= 3;		//群ID
+}
+
+//Sub_Vchat_ForbidJoinGroupKillVisitor = 2184, 禁止加群踢出游客提示
+message CMDForbidJoinGroupKillVisitor
+{
+	uint32 groupID			= 1;		//群ID
+}
+
+//房间相关设置类型
+enum e_SettingType
+{
+	e_Setting_All				= 0;	//所有（查询时使用）
+	e_Setting_JoinGroup			= 1;	//进群开关：1 开启，0 关闭
+	e_Setting_KillVisitor		= 2;	//踢出所有游客：1 踢出，0 不踢出
+	e_Setting_ContributionList	= 3;	//贡献榜：1 开启，0 关闭
+	e_Setting_VoiceChat			= 4;	//语音聊天：1 开启，0 关闭
+	e_Setting_AllowVisitorOnMic = 5;	//是否允许游客上麦：1 允许，0 不允许
+//	e_Setting_VideoAuth			= 6;	//视频认证：1 开启，0 关闭	（废弃）
+//	e_Setting_ChatLimit			= 7;	//私聊门槛（贡献值）：0 无限制  （废弃）
+	e_Setting_PChat_Switch		= 8;	//是否允许私聊
+}
+
+//房间相关设置状态结构体
+message CMDSettingStat
+{
+	e_SettingType type	= 1;	//类型
+	int32		 stat	= 2;	//状态
+}
+
+//Sub_Vchat_GroupSettingStatNotify = 2185, 房间设置状态通知
+message CMDGroupSettingStatNotify
+{
+	uint32 runID				= 1;	//操作者id
+	uint32 groupID				= 2;	//群id
+	repeated CMDSettingStat list 		= 3;	//房间设置状态列表
+}
+
+//Sub_Vchat_GroupSettingStatReq = 2196，房间相关设置请求
+message CMDGroupSettingStatReq
+{
+	uint32 userID		= 1;	//用户ID
+	uint32 groupID		= 2;	//群ID
+	e_SettingType type	= 3;	//请求类型
+}
+
+//Sub_Vchat_QryJoinGroupCondReq	= 2199,	查询加群条件请求
+message CMDQryJoinGroupCondReq
+{
+	uint32 userID		= 1;	//用户ID
+	uint32 groupID		= 2;	//群ID
+}
+
+//Sub_Vchat_QryJoinGroupCondResp = 2200, 查询加群条件反馈
+message CMDQryJoinGroupCondResp
+{
+	CMDErrCode errInfo	= 1;	//错误ID
+	uint32 userID		= 2;	//用户ID
+	uint32 groupID		= 3;	//群ID
+	string action		= 4;	//进群条件
+}
+
+//same as e_JoinGroupAuthType in TCommonIf.thrift
+enum e_UserJoinGroupAuthType
+{
+	e_NoNeedAuth		= 0;	//不需要验证
+	e_RedPacketAuth		= 1;	//发红包验证
+	e_VideoAuth			= 2;	//视频验证
+	e_MsgAuth			= 3;	//留言验证
+	e_Forbidden			= 4;	//禁止进群
+}
+
+//Sub_Vchat_ApplyJoinGroupAuthReq 用户申请进群留言验证请求 2201
+message CMDApplyJoinGroupAuthReq
+{
+	uint32 userID		= 1;	//用户ID
+	uint32 groupID		= 2;	//群ID
+	e_UserJoinGroupAuthType authType	= 3;	//进群验证类型
+	string msg			= 4;	//申请留言
+}
+
+//Sub_Vchat_ApplyJoinGroupAuthResp 用户申请进群留言验证反馈 2202
+message CMDApplyJoinGroupAuthResp
+{
+	uint32 userID		= 1;	//用户ID
+	uint32 groupID		= 2;	//群ID
+	CMDErrCode errInfo	= 3;	//错误ID
+}
+
+//Sub_Vchat_HandleJoinGroupAuthReq 管理员审批进群验证请求 2203
+message CMDHandleJoinGroupAuthReq
+{
+	uint32 run_userID	= 1;	//审批人ID
+	uint32 groupID		= 2;	//群ID
+	uint32 apply_userID	= 3;	//申请人ID
+	uint32 authID		= 4;	//认证ID
+	bool   agree		= 5;	//true为同意,false为拒绝
+}
+
+//Sub_Vchat_HandleJoinGroupAuthResp 管理员审批进群验证反馈 2204
+message CMDHandleJoinGroupAuthResp
+{
+	uint32 run_userID	= 1;	//审批人ID
+	uint32 groupID		= 2;	//群ID
+	uint32 apply_userID	= 3;	//申请人ID
+	uint32 authID		= 4;	//认证ID
+	bool   agree		= 5;	//true为同意,false为拒绝
+	CMDErrCode errInfo	= 6;	//错误ID
+}
+
+enum e_MicMode
+{
+	e_FreeMode	= 0;
+	e_ChairmanMode	= 1;
+	e_QueueMode	= 2;
+}
+message CMDSetMicModeReq
+{
+	uint32 vcbid 	= 1;
+	uint32 userid	= 2;	
+	e_MicMode micmode = 3;
+}
+message CMDSetMicModeResp
+{
+	uint32 vcbid 	= 1;
+	uint32 userid	= 2;
+	CMDErrCode errInfo	= 3;
+}
+message CMDSetMicModeNoty
+{
+	uint32 vcbid 	= 1;
+	uint32 userid	= 2;
+	e_MicMode micmode = 3;
+}
+message CMDSetMicPosStatusReq
+{
+	uint32 vcbid 	= 1;
+	uint32 userid	= 2;
+	uint32 index	= 3;
+	uint32 status	= 4;	
+}
+message CMDSetMicPosStatusResp
+{
+	uint32 vcbid 	= 1;
+	uint32 userid	= 2;
+	CMDErrCode errInfo	= 3;
+}
+message CMDSetMicPosStatusNoty
+{
+	uint32 vcbid	= 1;
+	uint32 userid 	= 2;
+	uint32 index	= 3;
+	uint32 status	= 4;
+}
+message CMDRoomInfoExtReq
+{
+	int32 vcbid	= 1;
+	int32 userid	= 2;
+}
+message CMDRoomInfoExtResp
+{
+	int32 vcbid	= 1;
+	e_MicMode micmode = 2;
+	string name	= 3;
+	string icon	= 4;
+	int32 micsec	= 5;
+}
+message CMDInviteOnMic
+{
+	int32 runuserid	= 1;
+	int32 touserid	= 2;
+	int32 optype	= 3;// 1 邀请 2同意 3拒绝 4超时拒绝 5连接成功 6挂断 7取消邀请 8被邀请 9掉线
+	int32 vcbid	= 4;
+	int32 sessionid = 5;
+	CMDErrCode errInfo	= 6;
+	int32 intimacy 	= 7;
+	int32 threshold	= 8;
+}
+
+//个人星球设置 Sub_Vchat_GroupUserSettingReq 2205
+message CMDGroupUserSettingReq
+{
+	uint32 groupid 				= 1;	//群id
+	uint32 userid				= 2;	//用户id
+	CMDUInt32 PChatThreshold	= 3;	//私聊亲密度门槛（糖果）
+}
+
+//个人星球设置响应 Sub_Vchat_GroupUserSettingResp 2206
+message CMDGroupUserSettingResp
+{
+	CMDErrCode errInfo	= 1;	//结果，0 成功，其他 失败
+	uint32 groupid		= 2;	//群id
+	uint32 userid		= 3;	//用户id
+}
+
+//认证状态 Sub_Vchat_UserAuthStateNoty 2209
+message CMDAuthStateNoty
+{
+	uint32 userid		= 1;		//用户id
+	uint32 groupid		= 2;		//群id
+	uint32 authState	= 3;		//认证状态 0-不认证 1-认证
+}
+message CMDAuthReq
+{
+	uint32 userid	= 1;
+	uint32 vcbid 	= 2;
+}
+message CMDAuthResp
+{
+	uint32 userid 	= 1;
+	uint32 vcbid 	= 2;
+	string appid	= 3;
+	string recvkey	= 4;
+	string sendkey	= 5;
+	uint32 errcode	= 6;
+}
+
+//当前在群成员列表 Sub_Vchat_GroupOnlineMemberList 2212
+message CMDGroupOnlineMemberList
+{
+	uint32 groupid	= 1;
+	repeated uint32 list = 2;
+}
+
+//成员进群通知 Sub_Vchat_MemberEnterGroup 2213
+message CMDMemberEnterGroup
+{
+	uint32 groupid	= 1;
+	uint32 userid	= 2;
+}
+
+//成员离开通知 Sub_Vchat_MemberExitGroup 2214
+message CMDMemberExitGroup
+{
+	uint32 groupid	= 1;
+	uint32 userid	= 2;
+}
+//成员离开通知 Sub_Vchat_MemberExitGroup 2214
+
+//禁言请求 Sub_Vchat_ForbidUserChat 2215
+//禁言通知 Sub_Vchat_ForbidUserChatNoty 2216
+//禁言请求返回 Sub_Vchat_ForbidUserChatRsp 2224
+message CMDForbidUserChat
+{
+	uint32 groupid	= 1;
+	uint32 userid	= 2;	
+	uint32 toid	= 3;
+	uint32 status	= 4;
+	uint32 errid 	= 5;
+}
+//下课Sub_Vchat_CourseFinishReq							= 2217,
+//下课通知Sub_Vchat_CourseFinishNoty							= 2218,
+message CMDCourseFinish
+{
+	uint32 groupid	= 1;
+	uint32 userid	= 2;
+}
+
+//冷场Sub_Vchat_SilenceNoty								= 2220,
+message CMDSilenceNoty
+{
+	message tipUser
+	{
+		string srcname 	= 1;
+		string srchead 	= 2;
+		string gifname  = 3;
+		string gifpicture  = 4;
+	}
+	uint32	groupid	= 1;	
+	repeated tipUser user = 2;
+}
+
+//推送公告Sub_Vchat_noticeNoty								= 2222,
+message CMDNoticeNoty
+{
+	string notice	= 1;
+}
+
+//禁用通知 Sub_Vchat_CloseLiveAndCourseNoty 2225
+message CMDCloseLiveAndCourseeNoty
+{
+	uint32 groupid	= 1;
+	uint32 runuserid	= 2;	
+	uint32 toid	= 3;
+	uint32 status	= 4;//1开启，2关闭
+	uint32 type	= 5;	//1直播间，2所有课程 3 单个课程
+	uint32 errid 	= 6;
+}
+
+//开播通知 Sub_Vchat_LiveStart   2226
+message CMDLiveStartNoty
+{
+	uint32 groupid	= 1;//课程id
+	uint32 uid	= 2;//开课老师uid
+	string liveUrl=3;//直播地址
+}
+
+//停播通知 Sub_Vchat_LiveStart   2227
+message CMDLiveStopNoty
+{
+	uint32 groupid	= 1;//课程id
+	uint32 uid	= 2;//开课老师uid
+	string liveUrl=3;//直播地址
+}
+
+//课程开始通知Sub_Vchat_CourseStartNoty							= 2228,
+message CMDCourseStartNoty
+{
+	uint32 groupid	= 1; // 课程id
+	uint32 userid	= 2; // 开课老师uid
+	string title	= 3; // 标题
+	string content	= 4; // 内容
+}
+
+//系列课新子课通知Sub_Vchat_NewSubCourseNoty						= 2229,
+message CMDNewSubCourseNoty
+{
+	uint32 courseId = 1; // 系列课程id
+	uint32 subCourseId = 2; // 子课程id
+	uint32 userId = 3; // 开课老师uid
+	string courseName = 4; // 系列课名称
+	string subCourseName = 5; // 子课名称
+	string beginTime = 6; // 开课时间
+}
+
+//新课（单节课或系列课）通知Sub_Vchat_NewCourseNoty						= 2230,
+message CMDNewCourseNoty
+{
+	uint32 liveId = 1; // Live直播间id
+	uint32 userId = 2; // 开课老师uid
+	uint32 courseId = 3; // 系列课或单节课id
+	string roomName = 4; // 空间名称
+	string userAlias = 5; // 老师昵称
+	string courseName = 6; // 系列课或单节课名称
+}
