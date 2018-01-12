@@ -4,8 +4,8 @@
 # https://github.com/addcn/docker-lnmp.git
 #
 
-FROM mysql:5.7
-#MAINTAINER dodo <lhuibo@gmail.com>
+FROM mysql:5.6.30
+MAINTAINER lishide<376189717@qq.com>
 
 ENV TZ "Asia/Shanghai"
 
