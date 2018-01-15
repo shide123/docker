@@ -3,24 +3,16 @@ MAINTAINER lishide <376189717@qq.com>
 
 ENV TZ "Asia/Shanghai"
 #env install
-RUN yum -y install wget && yum install -y httpd && cd /tmp && wget http://cn.php.net/distributions/php-5.6.32.tar.gz && tar -xvf php-5.6.32.tar.gz && mv php-5.6.32 /usr/local/ && cd /usr/local && mv php-5.6.32/ php && cd php && yum -y install gcc && yum -y install libxml2 libxml2-devel && yum -y install make &&yum -y install openssl openssl-devel&& yum -y install bzip2 bzip2-devel &&  yum -y install curl-devel && yum -y install readline-devel && cd /usr/local/ && wget ftp://mcrypt.hellug.gr/pub/crypto/mcrypt/libmcrypt/libmcrypt-2.5.6.tar.gz && tar -xvf libmcrypt-2.5.6.tar.gz && cd libmcrypt-2.5.6 &&./configure && make && make install && echo /usr/local/lib >>/etc/ld.so.conf && ldconfig &&cd /usr/local/php && ./configure && make && make install &&./configure --prefix=/usr/local/php --with-libdir=lib64 --with-config-file-path=/etc --enable-inline-optimization --disable-debug --disable-rpath --enable-shared --enable-opcache --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-gettext --enable-mbstring --with-iconv --with-mcrypt --with-mhash --with-openssl --enable-bcmath --enable-soap --with-libxml-dir --enable-pcntl --enable-shmop --enable-sysvmsg --enable-sysvsem --enable-sysvshm --enable-sockets --with-curl --with-zlib --enable-zip --with-bz2 --with-readline --without-sqlite3 --without-pdo-sqlite --with-pear  && make && make install && yum -y install which 
+RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y php php-opcache php-pecl-apcu php-devel php-mbstring php-mcrypt php-mysqlnd php-phpunit-PHPUnit php-pecl-xdebug php-pecl-xhprof php-pdo php-pear php-fpm php-cli php-xml php-bcmath php-process php-gd php-common php-mongodb php-redis
 
 #make dir
-RUN mkdir -p /usr/local/php/etc/php-fpm.d/  && mkdir -p /var/log/php-fpm/ && mkdir -p /var/run/php-fpm/ && cp /usr/local/php/sbin/php-fpm /usr/bin && cp /usr/local/php/bin/php /usr/bin && mkdir -p /usr/local/myconf/php-fpm.d/
-
-
-#add redis/mongodb driver：
-
-RUN cd /usr/local && wget http://ftp.gnu.org/gnu/m4/m4-1.4.9.tar.gz && tar -zvxf m4-1.4.9.tar.gz && cd m4-1.4.9/ &&./configure && make && make install && cd ../ && wget http://ftp.gnu.org/gnu/autoconf/autoconf-2.62.tar.gz && tar -zvxf autoconf-2.62.tar.gz && cd autoconf-2.62/ && yum install -y perl && cd /usr/local/ && wget http://www.cpan.org/modules/by-module/Data/Data-Dumper-2.154.tar.gz && tar -xvf Data-Dumper-2.154.tar.gz && cd Data-Dumper-2.154 && yum install -y perl-devel  && perl Makefile.PL && make && make install && cd /usr/local/autoconf-2.62/ && ./configure && make && make install && cd /usr/local && wget https://github.com/phpredis/phpredis/archive/3.1.2.tar.gz && tar -xvf 3.1.2.tar.gz && cd /usr/local/phpredis-3.1.2 && /usr/local/php/bin/phpize &&./configure --with-php-config=/usr/local/php/bin/php-config && make && make install && cd /usr/local && yum install -y git && git clone https://github.com/mongodb/mongo-php-driver.git && cd mongo-php-driver && git submodule sync && git submodule update --init && /usr/local/php/bin/phpize && ./configure --with-php-config=/usr/local/php/bin/php-config && make all -j 5 && make install && cp /usr/local/php/lib/php/extensions/no-debug-non-zts-20131226/mongodb.so /usr/local/lib/php/extensions/no-debug-non-zts-20131226
+RUN mkdir -p /usr/local/php/etc/php-fpm.d/  && mkdir -p /var/log/php-fpm/ && mkdir -p /var/run/php-fpm/  && mkdir -p /usr/local/myconf/php-fpm.d/
 
 #ADD php confile
 ADD php5.6/php-fpm.conf /usr/local/myconf/php-fpm.conf
 ADD php5.6/php.ini /usr/local/myconf/php.ini
 ADD php5.6/php-fpm.d/www.conf /usr/local/myconf/php-fpm.d/www.conf
-ADD php5.6/start.sh /tmp/start.sh
-RUN chmod 777 /tmp/start.sh
-#start app
-#RUN php-fpm -c /usr/local/myconf/php.ini -y /usr/local/myconf/php-fpm.conf
 
 
 EXPOSE 9000
@@ -28,4 +20,4 @@ EXPOSE 9000
 #start container
 #docker run --name php5.6  -v /www:/www -v /usr/local/lnmp/docker-file/php5.6:/usr/local/myconf -d php5.6/php5.6
 
-ENTRYPOINT ["php-fpm", "-c", "/usr/local/myconf/php.ini", "-y","/usr/local/myconf/php-fpm.conf"]
+ENTRYPOINT ["php-fpm", "-F","-c","/usr/local/myconf/php.ini", "-y","/usr/local/myconf/php-fpm.conf"]
