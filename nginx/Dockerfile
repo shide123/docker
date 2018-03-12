@@ -15,7 +15,7 @@ RUN mkdir /www
 #add nginx.conf
 ADD nginx/nginx.conf /etc/nginx/nginx.conf
 #ADD nginx/fastcgi_params /usr/local/myconf/fastcgi_params
-#add start script
+
 #add extend  port
 EXPOSE 80 8081 443
 
