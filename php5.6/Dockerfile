@@ -9,7 +9,6 @@ RUN yum -y install --enablerepo=remi --enablerepo=remi-php56 php php-opcache php
 
 RUN mkdir /www
 RUN yum install nfs-utils -y 
-#ADD php confile
 #ADD php5.6/php-fpm.conf /usr/local/myconf/php-fpm.conf
 #ADD php5.6/php.ini /usr/local/myconf/php.ini
 ADD php5.6/php-fpm.d/www.conf /etc/php-fpm.d/www.conf
@@ -20,5 +19,3 @@ EXPOSE 9000
 #docker run --name php5.6  -v /www:/www -v /usr/local/lnmp/docker-file/php5.6:/usr/local/myconf -d php5.6/php5.6
 
 ENTRYPOINT ["php-fpm", "-F"]
-#ENTRYPOINT ["php-fpm"]
-
